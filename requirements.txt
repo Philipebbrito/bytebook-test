@@ -1,0 +1,23 @@
+# ByteBook — Dependências do Projeto
+# Instale com: pip install -r requirements.txt
+
+# ──────────────────────────────────────────────
+# Framework Web e Servidor ASGI
+# ──────────────────────────────────────────────
+fastapi==0.115.5
+uvicorn[standard]==0.32.0   # [standard] inclui websockets e httptools
+
+# ──────────────────────────────────────────────
+# Validação de Dados
+# ──────────────────────────────────────────────
+pydantic==2.9.2
+
+# ──────────────────────────────────────────────
+# Banco de Dados
+# ──────────────────────────────────────────────
+pyodbc==5.2.0
+
+# ──────────────────────────────────────────────
+# Integração Externa (Google Books API)
+# ──────────────────────────────────────────────
+requests==2.32.3
