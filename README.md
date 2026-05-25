@@ -28,7 +28,7 @@ byteBook/
 └── schema.sql
 ```
 
-| Camada | Python (FastAPI) | Java (Spring Boot) |
+| Camada | Python (FastAPI) | 
 |---|---|---|
 | Apresentação | `APIRouter` | 
 | Negócio | `Service class` | 
