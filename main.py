@@ -1,14 +1,11 @@
 # main.py — ByteBook
 # Arquivo principal — inicializa o FastAPI e registra os controllers.
 # Não contém rotas nem regras de negócio.
-
+#
 # Execute com: python -m uvicorn main:app --reload
 
 from fastapi import FastAPI
-from controller.autor_controller      import router as autor_router
-from controller.livro_controller      import router as livro_router
-from controller.cliente_controller    import router as cliente_router
-from controller.emprestimo_controller import router as emprestimo_router
+from controller.Controller import AutorController, LivroController, ClienteController, EmprestimoController
 
 app = FastAPI(
     title="ByteBook API",
@@ -25,10 +22,10 @@ app = FastAPI(
     version="2.0.0"
 )
 
-app.include_router(autor_router)
-app.include_router(livro_router)
-app.include_router(cliente_router)
-app.include_router(emprestimo_router)
+app.include_router(AutorController().router)
+app.include_router(LivroController().router)
+app.include_router(ClienteController().router)
+app.include_router(EmprestimoController().router)
 
 
 @app.get("/", tags=["Status"], summary="Verificar se a API está online")

@@ -8,21 +8,24 @@ Construído com **FastAPI + Python 3.12 + SQL Server + Google Books API**
 ## 🏗️ Arquitetura
 
 ```
-bytebook/
-│
-├── database.py               # Configuração da conexão pyodbc (SQL Server)
-├── models.py                 # DTOs/Schemas Pydantic v2
-├── main.py                   # Inicialização do FastAPI + registro de rotas
-├── requirements.txt          # Dependências do projeto
-│
-├── controllers/
-│   └── livro_controller.py   # Endpoints REST (Camada de Apresentação)
-│
-├── services/
-│   └── livro_service.py      # Regras de negócio + consumo Google Books
-│
-└── repositories/
-    └── livro_repository.py   # Acesso ao banco de dados (SQL puro)
+byteBook/
+├── config/
+│   └── Database.py
+├── controller/
+│   └── Controller.py
+├── model/
+│   ├── AutorModel.py
+│   ├── ClienteModel.py
+│   ├── EmprestimoModel.py
+│   └── LivroModel.py
+├── repository/
+│   └── Repository.py
+├── service/
+│   └── Service.py
+├── main.py
+├── README.md
+├── requirements.txt
+└── schema.sql
 ```
 
 | Camada | Python (FastAPI) | Java (Spring Boot) |

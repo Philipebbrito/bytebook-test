@@ -35,7 +35,7 @@ class LivroResponse(BaseModel):
     quantidade:    int           = 0
     dt_lancamento: Optional[str] = None
     editora:       Optional[str] = None
-    genero:  Optional[str] = None
+    genero:  Optional [str] = None
     id_autor_fk:   Optional[int] = None
     nome_autor:    Optional[str] = None   # Enriquecido via JIN com tabela autor
 

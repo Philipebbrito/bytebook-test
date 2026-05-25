@@ -19,4 +19,4 @@ class AutorResponse(BaseModel):
     id_autor: int
     nome: str
     dt_nasc:  Optional[str] = None
-    model_config = {"from_attributes": Tre}
+    model_config = {"from_attributes": True}
