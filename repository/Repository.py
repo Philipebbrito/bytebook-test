@@ -1,7 +1,7 @@
 # repository.py
 # Camada de acesso ao banco de dados.
 # Contém todas as classes Repository do sistema — SQL puro via pyodbc.
-# Equivalente ao @Repository do Spring Boot.
+
 
 import pyodbc
 from fastapi import HTTPException

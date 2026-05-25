@@ -1,7 +1,7 @@
 # controller.py
 # Camada de apresentação — define todas as rotas HTTP do sistema.
 # Cada classe usa um APIRouter próprio e delega ao Service correspondente.
-# Equivalente ao @RestController do Spring Boot.
+
 
 from fastapi import APIRouter
 from model.AutorModel import (AutorModel, AutorResponse)

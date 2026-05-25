@@ -2,7 +2,6 @@
 # Camada de regras de negócio.
 # Contém todas as classes Service do sistema.
 # Orquestra a lógica entre os controllers e os repositories.
-# Equivalente ao @Service do Spring Boot.
 
 import requests
 from fastapi import HTTPException
