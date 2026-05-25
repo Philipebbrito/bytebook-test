@@ -30,10 +30,10 @@ byteBook/
 
 | Camada | Python (FastAPI) | Java (Spring Boot) |
 |---|---|---|
-| Apresentação | `APIRouter` | `@RestController` |
-| Negócio | `Service class` | `@Service` |
-| Dados | `Repository class` | `@Repository / DAO` |
-| DTO | `Pydantic BaseModel` | `Record / DTO class` |
+| Apresentação | `APIRouter` | 
+| Negócio | `Service class` | 
+| Dados | `Repository class` | 
+| DTO | `Pydantic BaseModel` | 
 
 ---
 
