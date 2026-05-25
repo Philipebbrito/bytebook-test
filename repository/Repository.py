@@ -38,7 +38,7 @@ class AutorRepository:
             raise HTTPException(status_code=500, detail=f"Erro ao criar autor: {e}")
         finally:
             cursor.close()
-            self.conn.close()
+            
 
     def listar_autores(self) -> list[AutorResponse]:
         """Retorna todos os autores cadastrados."""
@@ -54,7 +54,7 @@ class AutorRepository:
             raise HTTPException(status_code=500, detail=f"Erro ao listar autores: {e}")
         finally:
             cursor.close()
-            self.conn.close()
+            
 
     def ver_autor(self, id_autor: int) -> AutorResponse:
         """Busca um autor pelo ID."""
@@ -72,7 +72,7 @@ class AutorRepository:
             raise HTTPException(status_code=500, detail=f"Erro ao buscar autor: {e}")
         finally:
             cursor.close()
-            self.conn.close()
+            
 
 
 # ══════════════════════════════════════════════════════════════
@@ -149,7 +149,7 @@ class LivroRepository:
             raise HTTPException(status_code=500, detail=f"Erro ao salvar livro: {e}")
         finally:
             cursor.close()
-            self.conn.close()
+            
 
     def criar_livro(self, livro: LivroModel) -> LivroResponse:
         """Cadastro manual. Rejeita ISBN duplicado."""
@@ -190,7 +190,7 @@ class LivroRepository:
             raise HTTPException(status_code=500, detail=f"Erro ao criar livro: {e}")
         finally:
             cursor.close()
-            self.conn.close()
+            
 
     def listar_livros(self) -> list[LivroResponse]:
         """Lista todos os livros com nome do autor via JOIN."""
@@ -217,7 +217,7 @@ class LivroRepository:
             raise HTTPException(status_code=500, detail=f"Erro ao listar livros: {e}")
         finally:
             cursor.close()
-            self.conn.close()
+            
 
     def _buscar_nome_autor(self, cursor, id_autor_fk) -> str | None:
         if not id_autor_fk:
@@ -268,7 +268,7 @@ class ClienteRepository:
             raise HTTPException(status_code=500, detail=f"Erro ao criar cliente: {e}")
         finally:
             cursor.close()
-            self.conn.close()
+            
 
     def listar_clientes(self) -> list[ClienteResponse]:
         """Retorna todos os clientes cadastrados."""
@@ -284,7 +284,7 @@ class ClienteRepository:
             raise HTTPException(status_code=500, detail=f"Erro ao listar clientes: {e}")
         finally:
             cursor.close()
-            self.conn.close()
+            
 
     def ver_cliente(self, id_cliente: int) -> ClienteResponse:
         """Busca um cliente pelo ID."""
@@ -302,7 +302,7 @@ class ClienteRepository:
             raise HTTPException(status_code=500, detail=f"Erro ao buscar cliente: {e}")
         finally:
             cursor.close()
-            self.conn.close()
+            
 
 
 # ══════════════════════════════════════════════════════════════
@@ -363,7 +363,7 @@ class EmprestimoRepository:
             raise HTTPException(status_code=500, detail=f"Erro ao registrar empréstimo: {e}")
         finally:
             cursor.close()
-            self.conn.close()
+            
 
     def encerrar_emprestimo(self, id_emprestimo: int) -> EmprestimoResponse:
         """
@@ -409,7 +409,7 @@ class EmprestimoRepository:
             raise HTTPException(status_code=500, detail=f"Erro ao encerrar empréstimo: {e}")
         finally:
             cursor.close()
-            self.conn.close()
+            
 
     def listar_emprestimos(self) -> list[EmprestimoResponse]:
         """Lista todos os empréstimos com nome do cliente e título do livro."""
@@ -439,4 +439,4 @@ class EmprestimoRepository:
             raise HTTPException(status_code=500, detail=f"Erro ao listar empréstimos: {e}")
         finally:
             cursor.close()
-            self.conn.close()
+            

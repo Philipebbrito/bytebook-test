@@ -117,6 +117,70 @@ class LivroService:
             if item.get("type") == "ISBN_13": isbn13 = item.get("identifier")
             elif item.get("type") == "ISBN_10": isbn10 = item.get("identifier")
         return isbn13 or isbn10 or fallback
+    
+    def buscar_por_titulo(self, titulo: str) -> list[LivroResponse]:
+        """
+        Consulta o Google Books pelo título/nome do livro e retorna uma lista de até 5 resultados.
+        NADA é salvo no banco neste passo.
+        """
+        titulo_limpo = titulo.strip()
+        if not titulo_limpo:
+            raise HTTPException(status_code=422, detail="O título não pode estar vazio.")
+
+        try:
+            resp = requests.get(
+                GOOGLE_BOOKS_URL,
+                params={"q": f"intitle:{titulo_limpo}", "maxResults": 5, "langRestrict": "pt"},
+                timeout=8
+            )
+            resp.raise_for_status()
+        # ══════════════════════════════════════════════════════════════
+        # NOVO BLOCO: TRATAMENTO DO ERRO 429 (TOO MANY REQUESTS)
+        # ══════════════════════════════════════════════════════════════
+        except requests.exceptions.HTTPError as e:
+            if e.response is not None and e.response.status_code == 429:
+                raise HTTPException(
+                    status_code=429,
+                    detail="A API do Google Books limitou nossas buscas temporariamente por excesso de requisições. Aguarde alguns instantes e tente novamente."
+                )
+            raise HTTPException(status_code=500, detail=f"Erro na API externa: {e}")
+        # ══════════════════════════════════════════════════════════════
+        except requests.exceptions.Timeout:
+            raise HTTPException(status_code=502, detail="A API do Google Books não respondeu.")
+        except requests.exceptions.ConnectionError:
+            raise HTTPException(status_code=502, detail="Sem conexão com a API do Google Books.")
+
+        dados = resp.json()
+        items = dados.get("items")
+        if not items:
+            raise HTTPException(status_code=404, detail=f"Nenhum livro encontrado para o título '{titulo_limpo}'.")
+
+        resultados = []
+        for item in items:
+            info = item.get("volumeInfo", {})
+            nome = info.get("title") or "Título não disponível"
+            autores = info.get("authors")
+            editora = info.get("publisher") or None
+            genero = (info.get("categories") or [None])[0]
+            ano = self._extrair_ano(info.get("publishedDate"))
+            
+            # Extrai o ISBN ou define um fallback seguro
+            isbn_f = self._extrair_isbn(info.get("industryIdentifiers", []), "0000000000000")
+
+            resultados.append(
+                LivroResponse(
+                    id_livro=0,
+                    nome=nome,
+                    isbn=isbn_f,
+                    quantidade=0,
+                    dt_lancamento=f"{ano}-01-01" if ano else None,
+                    editora=editora,
+                    genero=genero,
+                    nome_autor=autores[0] if autores else None
+                )
+            )
+        
+        return resultados
 
 
 # ══════════════════════════════════════════════════════════════

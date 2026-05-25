@@ -5,6 +5,7 @@
 # Execute com: python -m uvicorn main:app --reload
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from controller.Controller import AutorController, LivroController, ClienteController, EmprestimoController
 
 app = FastAPI(
@@ -20,6 +21,14 @@ app = FastAPI(
    - ISBN já existente → adiciona +1 no estoque do livro
 """,
     version="2.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permite que o seu arquivo HTML local acesse a API
+    allow_credentials=True,
+    allow_methods=["*"],  # Libera GET, POST, DELETE, etc.
+    allow_headers=["*"],  # Libera todos os cabeçalhos
 )
 
 app.include_router(AutorController().router)

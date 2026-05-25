@@ -52,6 +52,16 @@ class LivroController:
         self._registrar_rotas()
 
     def _registrar_rotas(self):
+        
+        @self.router.get("/buscar-por-titulo", response_model=list[LivroResponse],
+                         summary="[Passo 1 Alternativo] Buscar livros por título via Google Books",
+                         description=(
+                             "Consulta o Google Books por nome/título e retorna uma lista de até 5 opções. **Nada é salvo.** "
+                             "O front-end exibirá a lista e o usuário poderá escolher qual deseja salvar "
+                             "clicando no botão correspondente, que disparará o `POST /livros/isbn/confirmar`."
+                         ))
+        async def buscar_por_titulo(titulo: str):
+            return self.service.buscar_por_titulo(titulo)
 
         @self.router.get("/isbn/{isbn}", response_model=LivroResponse,
                          summary="[Passo 1] Buscar livro por ISBN via Google Books",
