@@ -29,7 +29,6 @@ byteBook/
 ```
 
 | Camada | Python (FastAPI) | 
-|---|---|---|
 | Apresentação | `APIRouter` | 
 | Negócio | `Service class` | 
 | Dados | `Repository class` | 
