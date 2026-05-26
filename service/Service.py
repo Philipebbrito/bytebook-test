@@ -100,15 +100,14 @@ class LivroService:
             elif item.get("type") == "ISBN_10": isbn10 = item.get("identifier")
         return isbn13 or isbn10 or fallback
     
-    # ══════════════════════════════════════════════════════════════
-    # MÉTODO DE BUSCA POR TÍTULO ATUALIZADO (COM FALLBACK)
-    # ══════════════════════════════════════════════════════════════
+    
+    
     def buscar_por_titulo(self, titulo: str) -> list[LivroResponse]:
         titulo_limpo = titulo.strip()
         if not titulo_limpo:
             raise HTTPException(status_code=422, detail="O título não pode estar vazio.")
 
-        # Tentativa 1: Google Books
+                
         try:
             resp = requests.get(
                 GOOGLE_BOOKS_URL,
@@ -117,17 +116,17 @@ class LivroService:
             )
             resp.raise_for_status()
             
-            # Se o Google responder com sucesso, processa o formato dele
+            
             dados = resp.json()
             items = dados.get("items", [])
             if items:
                 return self._processar_resultados_google(items)
                 
         except Exception as e:
-            # Se o Google falhar (erro 429 por exemplo), avisa o terminal e tenta o plano B
+            
             print(f"[AVISO] Google Books falhou ({e}). Iniciando fallback na Open Library...")
 
-        # Tentativa 2: Open Library (Plano B)
+        
         try:
             resp_fallback = requests.get(
                 OPEN_LIBRARY_URL,
@@ -144,14 +143,14 @@ class LivroService:
             return self._processar_resultados_open_library(docs)
 
         except HTTPException:
-            raise  # Repassa o erro 404 caso não ache nada em nenhuma API
+            raise  
         except Exception as err_fallback:
             raise HTTPException(
                 status_code=502, 
                 detail=f"Todas as APIs de livros estão indisponíveis no momento. Detalhes: {err_fallback}"
             )
 
-    # Métodos utilitários privados para organizar e mapear as respostas de cada API
+    
     def _processar_resultados_google(self, items: list) -> list[LivroResponse]:
         resultados = []
         for item in items:
