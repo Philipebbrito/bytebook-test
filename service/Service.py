@@ -1,23 +1,15 @@
-# service.py
-# Camada de regras de negócio.
-# Contém todas as classes Service do sistema.
-# Orquestra a lógica entre os controllers e os repositories.
-
 import requests
 from fastapi import HTTPException
 from config.Database import get_conexao
 from model.ClienteModel import (ClienteModel, ClienteResponse)
 from model.AutorModel import (AutorModel, AutorResponse)
-from model.EmprestimoModel import (EmprestimoModel, EmprestimoResponse,DevolucaoModel)
+from model.EmprestimoModel import (EmprestimoModel, EmprestimoResponse, DevolucaoModel)
 from model.LivroModel import (LivroModel, LivroResponse, ConfirmarLivroISBN, ResultadoISBN)
 from repository.Repository import (AutorRepository, LivroRepository, ClienteRepository, EmprestimoRepository)
 
 GOOGLE_BOOKS_URL = "https://www.googleapis.com/books/v1/volumes"
+OPEN_LIBRARY_URL = "https://openlibrary.org/search.json"
 
-
-# ══════════════════════════════════════════════════════════════
-# AUTOR
-# ══════════════════════════════════════════════════════════════
 
 class AutorService:
 
@@ -34,19 +26,9 @@ class AutorService:
         return AutorRepository(conn).ver_autor(id_autor)
 
 
-# ══════════════════════════════════════════════════════════════
-# LIVRO
-# ══════════════════════════════════════════════════════════════
-
 class LivroService:
 
     def buscar_por_isbn(self, isbn: str) -> LivroResponse:
-        """
-        Consulta o Google Books pelo ISBN e retorna preview dos dados.
-        NADA é salvo no banco neste passo.
-        O sistema exibe os dados e pergunta ao usuário se deseja salvar.
-        Se sim → chamar confirmar_salvamento().
-        """
         isbn_limpo = isbn.replace("-", "").replace(" ", "")
         if not isbn_limpo.isdigit() or len(isbn_limpo) not in (10, 13):
             raise HTTPException(status_code=422, detail="ISBN inválido. Use ISBN-10 ou ISBN-13.")
@@ -68,13 +50,13 @@ class LivroService:
         if not items:
             raise HTTPException(status_code=404, detail=f"Nenhum livro encontrado para o ISBN '{isbn_limpo}'.")
 
-        info    = items[0].get("volumeInfo", {})
-        nome    = info.get("title") or "Título não disponível"
+        info = items[0].get("volumeInfo", {})
+        nome = info.get("title") or "Título não disponível"
         autores = info.get("authors")
         editora = info.get("publisher") or None
-        genero  = (info.get("categories") or [None])[0]
-        ano     = self._extrair_ano(info.get("publishedDate"))
-        isbn_f  = self._extrair_isbn(info.get("industryIdentifiers", []), isbn_limpo)
+        genero = (info.get("categories") or [None])[0]
+        ano = self._extrair_ano(info.get("publishedDate"))
+        isbn_f = self._extrair_isbn(info.get("industryIdentifiers", []), isbn_limpo)
 
         return LivroResponse(
             id_livro=0,
@@ -118,43 +100,59 @@ class LivroService:
             elif item.get("type") == "ISBN_10": isbn10 = item.get("identifier")
         return isbn13 or isbn10 or fallback
     
+    # ══════════════════════════════════════════════════════════════
+    # MÉTODO DE BUSCA POR TÍTULO ATUALIZADO (COM FALLBACK)
+    # ══════════════════════════════════════════════════════════════
     def buscar_por_titulo(self, titulo: str) -> list[LivroResponse]:
-        """
-        Consulta o Google Books pelo título/nome do livro e retorna uma lista de até 5 resultados.
-        NADA é salvo no banco neste passo.
-        """
         titulo_limpo = titulo.strip()
         if not titulo_limpo:
             raise HTTPException(status_code=422, detail="O título não pode estar vazio.")
 
+        # Tentativa 1: Google Books
         try:
             resp = requests.get(
                 GOOGLE_BOOKS_URL,
                 params={"q": f"intitle:{titulo_limpo}", "maxResults": 5, "langRestrict": "pt"},
-                timeout=8
+                timeout=6
             )
             resp.raise_for_status()
-        # ══════════════════════════════════════════════════════════════
-        # NOVO BLOCO: TRATAMENTO DO ERRO 429 (TOO MANY REQUESTS)
-        # ══════════════════════════════════════════════════════════════
-        except requests.exceptions.HTTPError as e:
-            if e.response is not None and e.response.status_code == 429:
-                raise HTTPException(
-                    status_code=429,
-                    detail="A API do Google Books limitou nossas buscas temporariamente por excesso de requisições. Aguarde alguns instantes e tente novamente."
-                )
-            raise HTTPException(status_code=500, detail=f"Erro na API externa: {e}")
-        # ══════════════════════════════════════════════════════════════
-        except requests.exceptions.Timeout:
-            raise HTTPException(status_code=502, detail="A API do Google Books não respondeu.")
-        except requests.exceptions.ConnectionError:
-            raise HTTPException(status_code=502, detail="Sem conexão com a API do Google Books.")
+            
+            # Se o Google responder com sucesso, processa o formato dele
+            dados = resp.json()
+            items = dados.get("items", [])
+            if items:
+                return self._processar_resultados_google(items)
+                
+        except Exception as e:
+            # Se o Google falhar (erro 429 por exemplo), avisa o terminal e tenta o plano B
+            print(f"[AVISO] Google Books falhou ({e}). Iniciando fallback na Open Library...")
 
-        dados = resp.json()
-        items = dados.get("items")
-        if not items:
-            raise HTTPException(status_code=404, detail=f"Nenhum livro encontrado para o título '{titulo_limpo}'.")
+        # Tentativa 2: Open Library (Plano B)
+        try:
+            resp_fallback = requests.get(
+                OPEN_LIBRARY_URL,
+                params={"title": titulo_limpo, "limit": 5},
+                timeout=12
+            )
+            resp_fallback.raise_for_status()
+            
+            dados_fallback = resp_fallback.json()
+            docs = dados_fallback.get("docs", [])
+            if not docs:
+                raise HTTPException(status_code=404, detail=f"Nenhum livro encontrado para o título '{titulo_limpo}'.")
+                
+            return self._processar_resultados_open_library(docs)
 
+        except HTTPException:
+            raise  # Repassa o erro 404 caso não ache nada em nenhuma API
+        except Exception as err_fallback:
+            raise HTTPException(
+                status_code=502, 
+                detail=f"Todas as APIs de livros estão indisponíveis no momento. Detalhes: {err_fallback}"
+            )
+
+    # Métodos utilitários privados para organizar e mapear as respostas de cada API
+    def _processar_resultados_google(self, items: list) -> list[LivroResponse]:
         resultados = []
         for item in items:
             info = item.get("volumeInfo", {})
@@ -163,8 +161,6 @@ class LivroService:
             editora = info.get("publisher") or None
             genero = (info.get("categories") or [None])[0]
             ano = self._extrair_ano(info.get("publishedDate"))
-            
-            # Extrai o ISBN ou define um fallback seguro
             isbn_f = self._extrair_isbn(info.get("industryIdentifiers", []), "0000000000000")
 
             resultados.append(
@@ -179,13 +175,34 @@ class LivroService:
                     nome_autor=autores[0] if autores else None
                 )
             )
-        
         return resultados
 
+    def _processar_resultados_open_library(self, docs: list) -> list[LivroResponse]:
+        resultados = []
+        for doc in docs:
+            nome = doc.get("title") or "Título não disponível"
+            autores = doc.get("author_name", [None])
+            editoras = doc.get("publisher", [None])
+            generos = doc.get("subject", [None])
+            ano = doc.get("first_publish_year")
+            
+            isbns = doc.get("isbn", [])
+            isbn_f = isbns[0] if isbns else "0000000000000"
 
-# ══════════════════════════════════════════════════════════════
-# CLIENTE
-# ══════════════════════════════════════════════════════════════
+            resultados.append(
+                LivroResponse(
+                    id_livro=0,
+                    nome=nome,
+                    isbn=isbn_f,
+                    quantidade=0,
+                    dt_lancamento=f"{ano}-01-01" if ano else None,
+                    editora=editoras[0],
+                    genero=generos[0],
+                    nome_autor=autores[0]
+                )
+            )
+        return resultados
+
 
 class ClienteService:
 
@@ -201,10 +218,6 @@ class ClienteService:
         conn = get_conexao()
         return ClienteRepository(conn).ver_cliente(id_cliente)
 
-
-# ══════════════════════════════════════════════════════════════
-# EMPRESTIMO
-# ══════════════════════════════════════════════════════════════
 
 class EmprestimoService:
 

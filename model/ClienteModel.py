@@ -2,13 +2,11 @@ from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 import re
 
-
 class ClienteModel(BaseModel):
-    """Dados de entrada para cadastrar um cliente."""
-    nome:     str           = Field(..., min_length=2, max_length=255)
+    nome: str = Field(..., min_length=2, max_length=255)
     endereco: Optional[str] = Field(default=None, max_length=500)
-    email:    Optional[str] = Field(default=None, max_length=255)
-    cpf:      Optional[str] = Field(default=None, description="CPF com ou sem máscara")
+    email: Optional[str] = Field(default=None, max_length=255)
+    cpf: Optional[str] = Field(default=None, description="CPF com ou sem máscara")
     telefone: Optional[str] = Field(default=None, max_length=20)
 
     @field_validator("cpf")
@@ -35,12 +33,11 @@ class ClienteModel(BaseModel):
 
 
 class ClienteResponse(BaseModel):
-    """Dados de saida do cliente, incluindo ID gerado pelo banco."""
     id_cliente: int
     nome: str
-    endereco:   Optional[str] = None
-    email:   Optional[str] = None
-    cpf:    Optional[str] = None
-    telefone:   Optional[str] = None
+    endereco: Optional[str] = None
+    email: Optional[str] = None
+    cpf: Optional[str] = None
+    telefone: Optional[str] = None
 
     model_config = {"from_attributes": True}

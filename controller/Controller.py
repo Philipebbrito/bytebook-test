@@ -1,8 +1,3 @@
-# controller.py
-# Camada de apresentação — define todas as rotas HTTP do sistema.
-# Cada classe usa um APIRouter próprio e delega ao Service correspondente.
-
-
 from fastapi import APIRouter
 from model.AutorModel import (AutorModel, AutorResponse)
 from model.EmprestimoModel import (EmprestimoModel, EmprestimoResponse, DevolucaoModel)
@@ -10,10 +5,6 @@ from model.LivroModel import (LivroModel, LivroResponse, ConfirmarLivroISBN, Res
 from model.ClienteModel import (ClienteModel, ClienteResponse) 
 from service.Service import (AutorService, LivroService, ClienteService, EmprestimoService)
 
-
-# ══════════════════════════════════════════════════════════════
-# AUTOR
-# ══════════════════════════════════════════════════════════════
 
 class AutorController:
 
@@ -40,9 +31,6 @@ class AutorController:
             return self.service.ver_autor(id_autor)
 
 
-# ══════════════════════════════════════════════════════════════
-# LIVRO
-# ══════════════════════════════════════════════════════════════
 
 class LivroController:
 
@@ -54,31 +42,20 @@ class LivroController:
     def _registrar_rotas(self):
         
         @self.router.get("/buscar-por-titulo", response_model=list[LivroResponse],
-                         summary="[Passo 1 Alternativo] Buscar livros por título via Google Books",
-                         description=(
-                             "Consulta o Google Books por nome/título e retorna uma lista de até 5 opções. **Nada é salvo.** "
-                             "O front-end exibirá a lista e o usuário poderá escolher qual deseja salvar "
-                             "clicando no botão correspondente, que disparará o `POST /livros/isbn/confirmar`."
-                         ))
+                         summary="",
+                         description=())
         async def buscar_por_titulo(titulo: str):
             return self.service.buscar_por_titulo(titulo)
 
         @self.router.get("/isbn/{isbn}", response_model=LivroResponse,
-                         summary="[Passo 1] Buscar livro por ISBN via Google Books",
-                         description=(
-                             "Consulta o Google Books e retorna preview. **Nada é salvo.** "
-                             "Após exibir, o sistema pergunta se deseja salvar. "
-                             "Se sim → `POST /livros/isbn/confirmar`."
-                         ))
+                         summary="",
+                         description=())
         async def buscar_por_isbn(isbn: str):
             return self.service.buscar_por_isbn(isbn)
 
         @self.router.post("/isbn/confirmar", response_model=ResultadoISBN, status_code=201,
-                          summary="[Passo 2] Confirmar salvamento após busca por ISBN",
-                          description=(
-                              "- **ISBN novo** → cadastra o livro com `quantidade = 1`\n"
-                              "- **ISBN existente** → soma `+1` no estoque"
-                          ))
+                          summary="",
+                          description=())
         async def confirmar_salvamento(dados: ConfirmarLivroISBN):
             return self.service.confirmar_salvamento(dados)
 
@@ -93,9 +70,6 @@ class LivroController:
             return self.service.listar_livros()
 
 
-# ══════════════════════════════════════════════════════════════
-# CLIENTE
-# ══════════════════════════════════════════════════════════════
 
 class ClienteController:
 
@@ -122,10 +96,6 @@ class ClienteController:
             return self.service.ver_cliente(id_cliente)
 
 
-# ══════════════════════════════════════════════════════════════
-# EMPRESTIMO
-# ══════════════════════════════════════════════════════════════
-
 class EmprestimoController:
 
     def __init__(self):
@@ -142,8 +112,8 @@ class EmprestimoController:
             return self.service.novo_emprestimo(emprestimo)
 
         @self.router.delete("/{id_emprestimo}", response_model=EmprestimoResponse,
-                            summary="Encerrar empréstimo / registrar devolução",
-                            description="Muda status para 'devolvido', registra data real e restaura +1 no estoque.")
+                            summary="",
+                            description="")
         async def encerrar_emprestimo(id_emprestimo: int):
             return self.service.encerrar_emprestimo(id_emprestimo)
 

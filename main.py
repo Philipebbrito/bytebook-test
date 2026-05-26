@@ -1,9 +1,3 @@
-# main.py — ByteBook
-# Arquivo principal — inicializa o FastAPI e registra os controllers.
-# Não contém rotas nem regras de negócio.
-#
-# Execute com: python -m uvicorn main:app --reload
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from controller.Controller import AutorController, LivroController, ClienteController, EmprestimoController

@@ -1,8 +1,3 @@
-# repository.py
-# Camada de acesso ao banco de dados.
-# Contém todas as classes Repository do sistema — SQL puro via pyodbc.
-
-
 import pyodbc
 from fastapi import HTTPException
 from model.ClienteModel import (ClienteModel, ClienteResponse)
@@ -11,17 +6,13 @@ from model.EmprestimoModel import (EmprestimoModel, EmprestimoResponse,Devolucao
 from model.LivroModel import (LivroModel, LivroResponse, ConfirmarLivroISBN, ResultadoISBN)
 
 
-# ══════════════════════════════════════════════════════════════
-# AUTOR
-# ══════════════════════════════════════════════════════════════
-
 class AutorRepository:
 
     def __init__(self, conn: pyodbc.Connection):
         self.conn = conn
 
     def criar_autor(self, autor: AutorModel) -> AutorResponse:
-        """Insere um novo autor e retorna com ID gerado pelo banco."""
+        
         sql = """
             INSERT INTO autor (nome, dt_nasc)
             OUTPUT INSERTED.id_autor_pk
@@ -41,7 +32,6 @@ class AutorRepository:
             
 
     def listar_autores(self) -> list[AutorResponse]:
-        """Retorna todos os autores cadastrados."""
         sql = "SELECT id_autor_pk, nome, dt_nasc FROM autor ORDER BY nome"
         try:
             cursor = self.conn.cursor()
@@ -57,7 +47,6 @@ class AutorRepository:
             
 
     def ver_autor(self, id_autor: int) -> AutorResponse:
-        """Busca um autor pelo ID."""
         sql = "SELECT id_autor_pk, nome, dt_nasc FROM autor WHERE id_autor_pk = ?"
         try:
             cursor = self.conn.cursor()
@@ -75,21 +64,14 @@ class AutorRepository:
             
 
 
-# ══════════════════════════════════════════════════════════════
-# LIVRO
-# ══════════════════════════════════════════════════════════════
-
+#
 class LivroRepository:
 
     def __init__(self, conn: pyodbc.Connection):
         self.conn = conn
 
     def confirmar_ou_adicionar(self, dados: ConfirmarLivroISBN) -> ResultadoISBN:
-        """
-        Decisão automática baseada no ISBN:
-        - ISBN novo      → cria o livro com quantidade = 1
-        - ISBN existente → soma +1 na quantidade do livro já cadastrado
-        """
+        
         try:
             cursor = self.conn.cursor()
 
@@ -118,7 +100,6 @@ class LivroRepository:
                 )
 
             else:
-                # ISBN novo — cadastra o livro
                 cursor.execute(
                     """
                     INSERT INTO Livro (nome, isbn, quantidade, dt_lancamento, editora, genero, id_autor_fk)
@@ -152,7 +133,6 @@ class LivroRepository:
             
 
     def criar_livro(self, livro: LivroModel) -> LivroResponse:
-        """Cadastro manual. Rejeita ISBN duplicado."""
         try:
             cursor = self.conn.cursor()
 
@@ -193,7 +173,6 @@ class LivroRepository:
             
 
     def listar_livros(self) -> list[LivroResponse]:
-        """Lista todos os livros com nome do autor via JOIN."""
         sql = """
             SELECT l.id_livro, l.nome, l.isbn, l.quantidade,
                    l.dt_lancamento, l.editora, l.genero,
@@ -230,17 +209,12 @@ class LivroRepository:
             return None
 
 
-# ══════════════════════════════════════════════════════════════
-# CLIENTE
-# ══════════════════════════════════════════════════════════════
-
 class ClienteRepository:
 
     def __init__(self, conn: pyodbc.Connection):
         self.conn = conn
 
     def criar_cliente(self, cliente: ClienteModel) -> ClienteResponse:
-        """Insere novo cliente e retorna com ID gerado pelo banco."""
         sql = """
             INSERT INTO cliente (nome, endereco, email, cpf, telefone)
             OUTPUT INSERTED.id_cliente_pk
@@ -271,7 +245,6 @@ class ClienteRepository:
             
 
     def listar_clientes(self) -> list[ClienteResponse]:
-        """Retorna todos os clientes cadastrados."""
         sql = "SELECT id_cliente_pk, nome, endereco, email, cpf, telefone FROM cliente ORDER BY nome"
         try:
             cursor = self.conn.cursor()
@@ -287,7 +260,6 @@ class ClienteRepository:
             
 
     def ver_cliente(self, id_cliente: int) -> ClienteResponse:
-        """Busca um cliente pelo ID."""
         sql = "SELECT id_cliente_pk, nome, endereco, email, cpf, telefone FROM cliente WHERE id_cliente_pk = ?"
         try:
             cursor = self.conn.cursor()
@@ -304,21 +276,13 @@ class ClienteRepository:
             cursor.close()
             
 
-
-# ══════════════════════════════════════════════════════════════
-# EMPRESTIMO
-# ══════════════════════════════════════════════════════════════
-
 class EmprestimoRepository:
 
     def __init__(self, conn: pyodbc.Connection):
         self.conn = conn
 
     def novo_emprestimo(self, emprestimo: EmprestimoModel) -> EmprestimoResponse:
-        """
-        Registra empréstimo e reduz 1 do estoque do livro.
-        Valida: livro com quantidade > 0 e cliente existe.
-        """
+        
         try:
             cursor = self.conn.cursor()
 
@@ -366,10 +330,7 @@ class EmprestimoRepository:
             
 
     def encerrar_emprestimo(self, id_emprestimo: int) -> EmprestimoResponse:
-        """
-        Registra devolução: status → 'devolvido', preenche dt_devolucao_real
-        e restaura +1 no estoque do livro.
-        """
+        
         try:
             cursor = self.conn.cursor()
 
@@ -412,7 +373,6 @@ class EmprestimoRepository:
             
 
     def listar_emprestimos(self) -> list[EmprestimoResponse]:
-        """Lista todos os empréstimos com nome do cliente e título do livro."""
         sql = """
             SELECT e.id_emprestimo_pk, e.id_livro_fk, e.id_cliente_fk,
                    e.dt_emprestimo, e.dt_devolucao_prev, e.dt_devolucao_real, e.status,

@@ -1,7 +1,3 @@
-# database.py
-# Configuração centralizada da conexão com o SQL Server.
-# Todos os repositories importam get_conexao() daqui.
-
 import pyodbc
 from fastapi import HTTPException
 
