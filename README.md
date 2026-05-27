@@ -1,163 +1,117 @@
-# 📚 ByteBook API
+# ByteBook API
 
-Sistema de Gerenciamento de Biblioteca — Projeto de Faculdade  
-Construído com **FastAPI + Python 3.12 + SQL Server + Google Books API**
+Sistema de Gerenciamento de Biblioteca — Projeto de Faculdade
+Construido com FastAPI + Python 3.13 + SQL Server + Google Books API
 
 ---
 
-## 🏗️ Arquitetura
+## Arquitetura
 
 ```
 byteBook/
 ├── config/
-│   └── Database.py
+│   └── Database.py          # Configuracao da conexao com SQL Server
 ├── controller/
-│   └── Controller.py
+│   └── Controller.py        # AutorController, LivroController, ClienteController, EmprestimoController
 ├── model/
-│   ├── AutorModel.py
-│   ├── ClienteModel.py
-│   ├── EmprestimoModel.py
-│   └── LivroModel.py
+│   ├── AutorModel.py        # AutorModel, AutorResponse
+│   ├── ClienteModel.py      # ClienteModel, ClienteResponse
+│   ├── EmprestimoModel.py   # EmprestimoModel, DevolucaoModel, EmprestimoResponse
+│   └── LivroModel.py        # LivroModel, LivroResponse, ConfirmarLivroISBN, ResultadoISBN
 ├── repository/
-│   └── Repository.py
+│   └── Repository.py        # AutorRepository, LivroRepository, ClienteRepository, EmprestimoRepository
 ├── service/
-│   └── Service.py
-├── main.py
-├── README.md
+│   └── Service.py           # AutorService, LivroService, ClienteService, EmprestimoService
+├── main.py                  # Inicializa o FastAPI e registra os controllers
 ├── requirements.txt
 └── schema.sql
 ```
 
-| Camada | Python (FastAPI) | 
-| Apresentação | `APIRouter` | 
-| Negócio | `Service class` | 
-| Dados | `Repository class` | 
-| DTO | `Pydantic BaseModel` | 
+### Fluxo de chamada
+
+```
+main.py
+  └── controller/Controller.py   (recebe a requisicao HTTP)
+        └── service/Service.py   (executa a regra de negocio)
+              └── repository/Repository.py   (acessa o banco de dados)
+                    └── model/*Model.py      (define a estrutura dos dados)
+```
 
 ---
 
-## ⚙️ Setup do Ambiente
+## Setup
 
-### 1. Criar e ativar o ambiente virtual (PEP 668)
+### 1. Criar e ativar ambiente virtual
 
-```bash
-# Criar venv
-python3.12 -m venv .venv
-
-# Ativar (Linux/macOS)
-source .venv/bin/activate
-
-# Ativar (Windows)
-.venv\Scripts\activate
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
 ```
 
-### 2. Instalar as dependências
+### 2. Instalar dependencias
 
-```bash
+```powershell
 pip install -r requirements.txt
 ```
 
-### 3. Criar a tabela no SQL Server
+### 3. Executar o schema.sql no SSMS
 
-Execute o script abaixo no seu banco **ByteBook**:
+Abra o SQL Server Management Studio, conecte em localhost\SQLEXPRESS
+e execute o arquivo schema.sql para criar o banco e as tabelas.
 
-```sql
-CREATE TABLE Livros (
-    id             INT IDENTITY(1,1) PRIMARY KEY,
-    titulo         NVARCHAR(255)  NOT NULL,
-    autor          NVARCHAR(255)  NOT NULL,
-    isbn           NVARCHAR(13)   NOT NULL UNIQUE,
-    ano_publicacao INT            NULL
-);
+### 4. Iniciar o servidor
+
+```powershell
+python -m uvicorn main:app --reload
 ```
 
-### 4. Configurar a conexão
-
-Edite `database.py` e ajuste as variáveis em `DB_CONFIG`:
-
-```python
-DB_CONFIG = {
-    "driver":   "{ODBC Driver 17 for SQL Server}",
-    "server":   "localhost",      # ou "localhost\\SQLEXPRESS"
-    "database": "ByteBook",
-    "username": "sa",
-    "password": "SuaSenhaAqui",
-}
-```
-
-### 5. Iniciar o servidor
-
-```bash
-uvicorn main:app --reload --port 8000
-```
+Acesse: http://localhost:8000/docs
 
 ---
 
-## 🔄 Fluxo Principal — Cadastro de Livro
+## Endpoints
 
-```
-1. GET  /api/v1/livros/buscar/{isbn}  →  Busca na API do Google Books
-2. Usuário visualiza o JSON retornado no Swagger
-3. POST /api/v1/livros/               →  Salva os dados no SQL Server
-```
+### Autores
+| Metodo | Rota | Descricao |
+|--------|------|-----------|
+| POST | /autores/ | Cadastrar autor |
+| GET | /autores/ | Listar autores |
+| GET | /autores/{id} | Buscar por ID |
+
+### Livros
+| Metodo | Rota | Descricao |
+|--------|------|-----------|
+| GET | /livros/buscar-por-titulo?titulo= | Busca por titulo (Google Books + fallback Open Library) |
+| GET | /livros/isbn/{isbn} | [Passo 1] Preview via Google Books |
+| POST | /livros/isbn/confirmar | [Passo 2] Salvar livro — cria ou adiciona estoque |
+| POST | /livros/ | Cadastro manual |
+| GET | /livros/ | Listar todos |
+
+### Clientes
+| Metodo | Rota | Descricao |
+|--------|------|-----------|
+| POST | /clientes/ | Cadastrar cliente |
+| GET | /clientes/ | Listar clientes |
+| GET | /clientes/{id} | Buscar por ID |
+
+### Emprestimos
+| Metodo | Rota | Descricao |
+|--------|------|-----------|
+| POST | /emprestimos/ | Registrar emprestimo (reduz estoque) |
+| DELETE | /emprestimos/{id} | Encerrar / registrar devolucao (restaura estoque) |
+| GET | /emprestimos/ | Listar todos |
 
 ---
 
-## 📖 Documentação Interativa
+## Fluxo ISBN
 
-Com o servidor rodando, acesse:
-
-| Interface | URL |
-|---|---|
-| **Swagger UI** | http://localhost:8000/docs |
-| **ReDoc** | http://localhost:8000/redoc |
-| **Health Check** | http://localhost:8000/ |
-
----
-
-## 🧪 Exemplo de Uso
-
-### Passo 1 — Buscar pelo ISBN
-
-```http
-GET /api/v1/livros/buscar/9780132350884
 ```
+1. GET  /livros/isbn/9780132350884
+        Retorna preview — nada salvo ainda
 
-**Resposta:**
-```json
-{
-  "id": null,
-  "titulo": "Clean Code",
-  "autor": "Robert C. Martin",
-  "isbn": "9780132350884",
-  "ano_publicacao": 2008
-}
-```
+2. Sistema exibe os dados e pergunta: "Deseja salvar?"
 
-### Passo 2 — Salvar no banco
-
-```http
-POST /api/v1/livros/
-Content-Type: application/json
-
-{
-  "titulo": "Clean Code",
-  "autor": "Robert C. Martin",
-  "isbn": "9780132350884",
-  "ano_publicacao": 2008
-}
-```
-
-**Resposta (201 Created):**
-```json
-{
-  "mensagem": "Livro cadastrado com sucesso!",
-  "livro": {
-    "id": 1,
-    "titulo": "Clean Code",
-    "autor": "Robert C. Martin",
-    "isbn": "9780132350884",
-    "ano_publicacao": 2008
-  }
-}
+3. POST /livros/isbn/confirmar  { nome, isbn, editora, ... }
+        ISBN novo?      -> { acao: "livro_criado",        quantidade: 1 }
+        ISBN existente? -> { acao: "exemplar_adicionado", quantidade: N }
 ```

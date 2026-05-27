@@ -70,10 +70,7 @@ class LivroService:
         )
 
     def confirmar_salvamento(self, dados: ConfirmarLivroISBN) -> ResultadoISBN:
-        """
-        Usuário confirmou que quer salvar.
-        O repository decide: ISBN novo → cria livro | ISBN existente → +1 no estoque.
-        """
+        
         conn = get_conexao()
         return LivroRepository(conn).confirmar_ou_adicionar(dados)
 
